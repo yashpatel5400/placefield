@@ -90,6 +90,9 @@ def config():
         # Number of trials for multi-trial experiment ----------------------------------------
         'NTrials': 1,
 
+        # Number of trials for multi-trial experiment ----------------------------------------
+        'theta_prop': 0.2,
+
         'message': ''
     }
 
@@ -211,6 +214,7 @@ def SimStep(net, Pre_input, sim_pars):
     tau_nov = sim_pars['tau_nov']
     eta_homeo = sim_pars['eta_homeo']
     noise_input = sim_pars['noise_input']
+    theta_prop = sim_pars['theta_prop']
 
     # Get the values from the network --------------------------------------------------------------------
     Wpre_d = net.Wpre_d
@@ -226,7 +230,9 @@ def SimStep(net, Pre_input, sim_pars):
     Pre_input = _rect(Pre_input)
 
     # Calculate the firing rate for the postsynaptic neuron (and rectify it when negative)----------------
-    RtES = RESin + eta_FR * dt * (-RESin + _rect(1 * np.sum(REDin) + ExtraCurr - Nth - I_soma))
+    Vsoma = ExtraCurr - I_soma
+    RtES = RESin + eta_FR * dt * (-RESin + _rect(int(Vsoma > theta_prop) * np.sum(REDin) + Vsoma - Nth))
+    # RtES = RESin + eta_FR * dt * (-RESin + _rect(1 * np.sum(REDin) + ExtraCurr - Nth - I_soma))
     RtED = REDin + eta_FR * dt * (-REDin + g_dend(np.dot(Wpre_d, Pre_input) - I_dend))
 
     RtES = RtES * (RtES > 0.)
