@@ -10,8 +10,8 @@ import multiprocessing as mp
 
 # %% Run the main code with sacred to track every experiment -------------------------------------------
 
-from Single_CA1_neuron import ex
-ex.run_command('my_main')
+# from Single_CA1_neuron import ex
+# ex.run_command('my_main')
 
 
 # %% Run the main code to create the figures -----------------------------------------------------------
@@ -30,8 +30,9 @@ for i in range(n_sims):
         f_names = [1]
 
     sys.argv = ['0', '{0:d}'.format(f_names[-1-i])]
-    exec(open("./Make_figs0.py").read())
-    exec(open("./Make_figs1.py").read())
+    # exec(open("./Make_figs0.py").read())
+    # exec(open("./Make_figs1.py").read())
+    exec(open("./make_figs.py").read())
 
     plt.show()
 

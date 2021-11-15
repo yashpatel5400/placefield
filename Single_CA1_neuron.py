@@ -59,7 +59,7 @@ def config():
         'N_pre': 10,         # Number of neurons in the presynaptic layer
         'Nth': 1.0,          # "Spiking threshold" (there is actually no threshold - rate-based neurons)
         'N_dend': 2,         # Number of dendritic compartments
-        'ExtraCurr_0': 1.,   # Extra current injected at the soma
+        'ExtraCurr_0': 1.5,   # Extra current injected at the soma
 
         # Simulation parameters --------------------------------------------------------------
         'dt': 1.,            # [ms] Simulation time step
