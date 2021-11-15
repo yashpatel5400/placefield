@@ -39,10 +39,10 @@ def _lower(x, min): return x - (x - min) * (x < min)  # apply a lower bound
 
 
 def pre_layer_input(pos, N_pre, T_length, PF_amp):
-    '''
+    """
     This function returns the firing rate of each neuron in the presynaptic layer as a function of
-    the animal's position
-    '''
+    the animal"s position
+    """
     sigma = 5.  # width of place fields of presynaptic neurons
     amp = PF_amp  # amplitude of place fields of presynaptic neurons
     place_input = np.zeros(N_pre)
@@ -56,14 +56,14 @@ def pre_layer_input(pos, N_pre, T_length, PF_amp):
     return place_input
 
 def g_dend(x):
-    '''
+    """
     This is the gain function of dendritic compartments for a given input current x
 
     input:
         x: input current (N_dend,)
     output:
         g_dend: firing rate of the dendritic compartments (N_dend,)
-    '''
+    """
     linear_length = 5.
     x = 2 * x
 
@@ -98,17 +98,17 @@ class Network(object):
         """
         Return a Network object
         """
-        self.Wpre_d = np.zeros((pars['N_dend'], pars['N_pre']))
+        self.Wpre_d = np.zeros((pars["N_dend"], pars["N_pre"]))
         self.Wpre_d[0, 4] = 1.
-        self.Wpre_d[0, :] += _rect(np.random.normal(0, 0.01, pars['N_pre']))
-        self.ExtraCurr = pars['ExtraCurr_0']
+        self.Wpre_d[0, :] += _rect(np.random.normal(0, 0.01, pars["N_pre"]))
+        self.ExtraCurr = pars["ExtraCurr_0"]
 
         # time-dependent variables
         self.RtES = 0.
-        self.RtED = np.zeros(pars['N_dend'])
+        self.RtED = np.zeros(pars["N_dend"])
 
         # Dendritic and somatic currents
-        self.I_dend = np.zeros(pars['N_dend'])
+        self.I_dend = np.zeros(pars["N_dend"])
         self.I_soma = 0.
 
 
@@ -121,17 +121,17 @@ def construct_net(sim_pars):
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 def sim_step(net, Pre_input, sim_pars):
     # Simulation parameters ------------------------------------------------------------------------------
-    eta_FR = sim_pars['eta_FR']
-    Nth = sim_pars['Nth']
-    eta_Extra = sim_pars['eta_Extra']
-    eta_input = sim_pars['eta_input']
-    dt = sim_pars['dt']
-    Idend_target = sim_pars['Idend_target']
-    Isoma_target = sim_pars['Isoma_target']
-    tau_nov = sim_pars['tau_nov']
-    eta_homeo = sim_pars['eta_homeo']
-    noise_input = sim_pars['noise_input']
-    theta_prop = sim_pars['theta_prop']
+    eta_FR = sim_pars["eta_FR"]
+    Nth = sim_pars["Nth"]
+    eta_Extra = sim_pars["eta_Extra"]
+    eta_input = sim_pars["eta_input"]
+    dt = sim_pars["dt"]
+    Idend_target = sim_pars["Idend_target"]
+    Isoma_target = sim_pars["Isoma_target"]
+    tau_nov = sim_pars["tau_nov"]
+    eta_homeo = sim_pars["eta_homeo"]
+    noise_input = sim_pars["noise_input"]
+    theta_prop = sim_pars["theta_prop"]
 
     # Get the values from the network --------------------------------------------------------------------
     Wpre_d = net.Wpre_d
@@ -187,14 +187,14 @@ def plasticity_trial(sim_pars):  # place map plasticity
     """
 
     # Extract parameters from configuration --------------------------------------------------------------
-    N_pre = sim_pars['N_pre']
-    N_dend = sim_pars['N_dend']
-    T_length = sim_pars['T_length']
-    dt = sim_pars['dt']
-    Idend_0 = sim_pars['Idend_0']
-    Isoma_0 = sim_pars['Isoma_0']
-    v_run = sim_pars['v_run']
-    PF_amp = sim_pars['PF_amp']
+    N_pre = sim_pars["N_pre"]
+    N_dend = sim_pars["N_dend"]
+    T_length = sim_pars["T_length"]
+    dt = sim_pars["dt"]
+    Idend_0 = sim_pars["Idend_0"]
+    Isoma_0 = sim_pars["Isoma_0"]
+    v_run = sim_pars["v_run"]
+    PF_amp = sim_pars["PF_amp"]
 
     # Create the network ---------------------------------------------------------------------------------
     net = construct_net(sim_pars)
@@ -204,7 +204,7 @@ def plasticity_trial(sim_pars):  # place map plasticity
     # -------------------------------------------------------------------------------------------------
 
     v = v_run   # [ms^-1] speed of the animal (the unit of length is abitrary)
-    n_laps = sim_pars['n_laps']  # number of laps
+    n_laps = sim_pars["n_laps"]  # number of laps
     t_explore = n_laps * T_length / v  # total time of experiment
     explore_steps = int(t_explore / dt)  # number of steps for integration
 
@@ -255,18 +255,18 @@ def run_trial(sim_pars, fname):  # place map plasticity
 # Define the main funtion which will call other functions and run it in parallel
 
 def sim_main(sim_pars, run_id):
-    exp_dir = r'./my_runs/' + run_id + '/Data_trials/'
+    exp_dir = r"./my_runs/" + run_id + "/Data_trials/"
     if not os.path.exists(exp_dir):
         os.makedirs(exp_dir)
-    fname = exp_dir + '/Firing_rates_Place_cell_soma_and_dends_all_trials.pickle'
+    fname = exp_dir + "/Firing_rates_Place_cell_soma_and_dends_all_trials.pickle"
 
-    print('\n Starting simulations...\n')
+    print("\n Starting simulations...\n")
     data = {}
 
-    num_trials = int(sim_pars['NTrials'])
+    num_trials = int(sim_pars["NTrials"])
     for trial in range(num_trials):
         data[trial] = run_trial(sim_pars, fname)
 
-    with open(fname, 'wb') as pickle_out:
+    with open(fname, "wb") as pickle_out:
         pickle.dump(data, pickle_out)
         pickle_out.close()
