@@ -265,6 +265,10 @@ def sim_main(sim_pars, run_id):
         os.makedirs(exp_dir)
     fname = exp_dir + "/Firing_rates_Place_cell_soma_and_dends_all_trials.pickle"
 
+    if os.path.exists(fname):
+        print("Already completed trial for: {}!".format(run_id))
+        return
+
     print("\n Starting simulations...\n")
     data = {}
 

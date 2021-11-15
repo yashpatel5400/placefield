@@ -79,8 +79,8 @@ def plot_run(sim_pars, run_id):
     plot_FR(pos, RF_develop[n_laps-1], ylabel="")
     plt.savefig(fig_dir + "current={}_hthresh={}-final_activity.png".format(
         sim_pars["ExtraCurr_0"], sim_pars["hard_thresh"]), dpi=300, transparent=True)
-    plt.show()
-    plt.cla()
+    # plt.show()
+    plt.clf()
 
     # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # Plot mean activity curve (over learning)
@@ -100,9 +100,11 @@ def plot_run(sim_pars, run_id):
 
     plt.savefig(fig_dir + "current={}_hthresh={}-final_activity.png".format(
         sim_pars["ExtraCurr_0"], sim_pars["hard_thresh"]), dpi=300, transparent=True)
-    plt.show()
+    # plt.show()
+    plt.clf()
     
 def plot_compilation(sim_pars, run_ids):
+    fig_dir = r"./Figures/"
     n_laps = sim_pars["n_laps"]
 
     for run_id in run_ids:
@@ -114,4 +116,6 @@ def plot_compilation(sim_pars, run_ids):
         pos = np.linspace(0, 50, points_lap)
 
         plot_FR(pos, RF_develop[n_laps-1], xlim=(15,30), ylim=(0,1), ylabel="")
-    plt.show()
+    plt.savefig(fig_dir + "hthresh={}-compiled_activity.png".format(
+        sim_pars["hard_thresh"]), dpi=300, transparent=True)
+    

@@ -58,20 +58,32 @@ def config():
     }
 
 def current_conversion_exp():
-    return {
-        "0": {
+    return [
+        {
             "ExtraCurr_0": 0.0,
-            "hard_thresh": True
+            "hard_thresh": False
         }, 
-        "1": {
+        {
+            "ExtraCurr_0": 0.25,
+            "hard_thresh": False
+        }, 
+        {
+            "ExtraCurr_0": 0.5,
+            "hard_thresh": False
+        }, 
+        {
+            "ExtraCurr_0": 0.75,
+            "hard_thresh": False
+        }, 
+        {
             "ExtraCurr_0": 1.0,
-            "hard_thresh": True
+            "hard_thresh": False
         }, 
-        "2": {
+        {
             "ExtraCurr_0": 1.5,
-            "hard_thresh": True
+            "hard_thresh": False
         }, 
-    }
+    ]
 
 if __name__ == "__main__":
     run_id_to_config = current_conversion_exp()
@@ -79,13 +91,12 @@ if __name__ == "__main__":
 
     for exp in run_id_to_config:
         sim_params = config()
-        for change in run_id_to_config[exp]:
-            sim_params[change] = run_id_to_config[exp][change]
+        for change in exp:
+            sim_params[change] = exp[change]
 
         run_id = "current={}_hthresh={}".format(sim_params["ExtraCurr_0"], sim_params["hard_thresh"])
         run_ids.append(run_id)
 
-        # sim_main(sim_params, run_id=run_id)
-        # plot_run(sim_params, run_id=run_id)
-
+        sim_main(sim_params, run_id=run_id)
+        plot_run(sim_params, run_id=run_id)
     plot_compilation(sim_params, run_ids=run_ids)
