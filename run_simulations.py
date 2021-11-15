@@ -6,7 +6,7 @@
 ##################################################################################
 
 from Single_CA1_neuron import sim_main
-from make_figs import plot_run
+from make_figs import plot_run, plot_compilation
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # Parameters to be saved for each the experiment -------------------------------------------------------------
@@ -60,23 +60,32 @@ def config():
 def current_conversion_exp():
     return {
         "0": {
-            "ExtraCurr_0": 1.0,
+            "ExtraCurr_0": 0.0,
+            "hard_thresh": True
         }, 
         "1": {
             "ExtraCurr_0": 1.0,
+            "hard_thresh": True
         }, 
         "2": {
             "ExtraCurr_0": 1.5,
+            "hard_thresh": True
         }, 
     }
 
 if __name__ == "__main__":
     run_id_to_config = current_conversion_exp()
+    run_ids = []
 
-    for run_id in run_id_to_config:
+    for exp in run_id_to_config:
         sim_params = config()
-        for change in run_id_to_config[run_id]:
-            sim_params[change] = run_id_to_config[run_id][change]
+        for change in run_id_to_config[exp]:
+            sim_params[change] = run_id_to_config[exp][change]
+
+        run_id = "current={}_hthresh={}".format(sim_params["ExtraCurr_0"], sim_params["hard_thresh"])
+        run_ids.append(run_id)
 
         # sim_main(sim_params, run_id=run_id)
-        plot_run(sim_params, run_id=run_id)
+        # plot_run(sim_params, run_id=run_id)
+
+    plot_compilation(sim_params, run_ids=run_ids)
