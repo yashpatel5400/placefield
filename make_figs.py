@@ -10,6 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import pickle
+from difflib import SequenceMatcher
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # Functions to create figures ++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -26,6 +27,8 @@ def plot_FR(tVec, FR, xlim=(0, 50.01), ylim=(-0.01, 2.), xlabel="Position", ylab
     plt.ylim()
     plt.plot(tVec, FR, lw=2, label=label, alpha=alpha)
 
+    plt.legend(loc="upper right")
+
     plt.tick_params(axis="y", labelcolor="k")
     plt.tick_params(axis="x", labelcolor="k")
 
@@ -41,13 +44,17 @@ def load_run_data(run_id):
         pickle_in.close()
 
     # extract the firing rates for soma and dendrites
+    # positions =  np.array([data_all[tr_id]["positions"] for tr_id in data_all.keys()])
     Soma_FRs = np.array([data_all[tr_id]["soma"] for tr_id in data_all.keys()])
     Dends_FRs = np.array([data_all[tr_id]["dendrites"] for tr_id in data_all.keys()])
     Syn_weights = np.array([data_all[tr_id]["Wpre_to_dend"] for tr_id in data_all.keys()])
     ExtraCurr = np.array([data_all[tr_id]["ExtraCurr"] for tr_id in data_all.keys()])
+
     n_laps = np.array([data_all[tr_id]["n_laps"] for tr_id in data_all.keys()])[0]
 
     # take an average over all trials
+    # positions = np.mean(positions, axis=0)
+    positions=[]
     Soma_FRs_ave = np.mean(Soma_FRs, axis=0)
     Dends_FRs_ave = np.mean(Dends_FRs, axis=0)
     Syn_weights_ave = np.mean(Syn_weights, axis=0)
@@ -56,10 +63,14 @@ def load_run_data(run_id):
     # create a vector with all the time points
     tVec = np.linspace(0, data_all[0]["t_explore"], Soma_FRs.shape[1])
     
-    return Soma_FRs_ave, Dends_FRs_ave, Syn_weights_ave, tVec
+    return positions, Soma_FRs_ave, Dends_FRs_ave, Syn_weights_ave, tVec
 
 def plot_run(sim_pars, run_id):
-    Soma_FRs_ave, Dends_FRs_ave, Syn_weights_ave, tVec = load_run_data(run_id)
+    positions, Soma_FRs_ave, Dends_FRs_ave, Syn_weights_ave, tVec = load_run_data(run_id)
+
+    # plt.plot(tVec, positions)
+    # plt.show()
+    # plt.clf()    
 
     fig_dir = r"./Figures/"
     if not os.path.exists(fig_dir):
@@ -76,7 +87,7 @@ def plot_run(sim_pars, run_id):
     # Plot final activation curve
     # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    plot_FR(pos, RF_develop[n_laps-1], xlim=(15,30), ylim=(0,1), xlabel="Position (a.u.)", ylabel="Mean activity")
+    plot_FR(pos, RF_develop[n_laps-1], xlim=(15,45), ylim=(0,1), xlabel="Position (a.u.)", ylabel="Mean activity")
     plt.savefig(fig_dir + f"{run_id}-final_activity.png", dpi=300, transparent=True)
     # plt.show()
     plt.clf()
@@ -101,19 +112,40 @@ def plot_run(sim_pars, run_id):
     # plt.show()
     plt.clf()
     
-def plot_compilation(sim_pars, run_ids):
+def plot_compilation(sim_pars, run_ids, compile_name, labels=[]):
     fig_dir = r"./Figures/"
     n_laps = sim_pars["n_laps"]
+    plot_final = True
 
-    for run_id in run_ids:
-        Soma_FRs_ave, Dends_FRs_ave, Syn_weights_ave, tVec = load_run_data(run_id)
+    for i, run_id in enumerate(run_ids):
+        positions, Soma_FRs_ave, Dends_FRs_ave, Syn_weights_ave, tVec = load_run_data(run_id)
         
         points_lap = int(Soma_FRs_ave.shape[0] / n_laps)
         RF_develop = Soma_FRs_ave.reshape((-1, points_lap))
         Dend_RF = Dends_FRs_ave[:, 0].reshape((-1, points_lap))
         pos = np.linspace(0, 50, points_lap)
 
-        plot_FR(pos, RF_develop[n_laps-1], xlim=(15,30), ylim=(0,1), ylabel="", label=run_id.split("_")[0])
-    plt.savefig(fig_dir + "hthresh={}-compiled_activity.png".format(
-        sim_pars["hard_thresh"]), dpi=300, transparent=True)
-    
+        if len(labels) == 0:
+            label = run_id.split("_")[0]
+        else:
+            label = labels[i]
+
+        if plot_final:
+            plot_FR(pos, RF_develop[n_laps-1], xlim=(25,35), ylim=(0,1), ylabel="", label=label)
+        else:
+            soma = Soma_FRs_ave.reshape((n_laps, -1))
+            dend = Dends_FRs_ave[:,0].reshape((n_laps, -1))
+
+            soma_mean = np.mean(soma, axis=1)
+            dend_mean = np.mean(dend, axis=1)
+
+            plt.ylabel("Mean Activity")
+            plt.xlabel("Lap")
+            if i == 0:
+                plt.plot(dend_mean, "k--", lw=2, label="Dendrite")
+            plt.plot(soma_mean, "k-", lw=2, label=label)
+            plt.legend()
+
+    # plt.show()
+    plt.savefig(fig_dir + f"{compile_name}-compiled.png", dpi=300, transparent=True)
+    plt.clf()

@@ -216,6 +216,7 @@ def plasticity_trial(sim_pars):  # place map plasticity
     explore_steps = int(t_explore / dt)  # number of steps for integration
 
     # Track all the postsynaptic firing rates ---------------------------------------------------------
+    positions = np.zeros((explore_steps))  # positions over time
     RESs = np.zeros((explore_steps))  # somatic firing rate
     REDs = np.zeros((explore_steps, N_dend))  # dendritic firing rate
     Wpre_ds = np.zeros((explore_steps, N_dend, N_pre))
@@ -244,31 +245,34 @@ def plasticity_trial(sim_pars):  # place map plasticity
 
     for step in range(explore_steps):
         t_bin = step * dt
-        Pre_input = pre_layer_input(pos_exp(t_bin), N_pre, T_length, PF_amp)
+        position = pos_exp(t_bin)
+        Pre_input = pre_layer_input(position, N_pre, T_length, PF_amp)
 
         # Call the simulation step to calculate all the values for next time step
         net = sim_step(net, Pre_input, sim_pars)
 
         # Save the results
+        positions[step] = position
         RESs[step] = net.RtES
         REDs[step] = net.RtED
         Wpre_ds[step] = net.Wpre_d
         ExtraCurrs[step] = net.ExtraCurr
 
-    return RESs, REDs, Wpre_ds, ExtraCurrs, t_explore, n_laps
+    return positions, RESs, REDs, Wpre_ds, ExtraCurrs, t_explore, n_laps
 
 
 # -----------------------------------------------------------------------------------------------------
 # Call the function with the experiment and save the results (define one trial)
 
 def run_trial(sim_pars, fname):  # place map plasticity
-    RESs, REDs, Wpre_ds, ExtraCurrs, t_explore, n_laps = plasticity_trial(sim_pars)
+    positions,RESs, REDs, Wpre_ds, ExtraCurrs, t_explore, n_laps = plasticity_trial(sim_pars)
     return {
         "t_explore": t_explore,
         "soma": RESs,
         "dendrites": REDs,
         "Wpre_to_dend": Wpre_ds,
         "ExtraCurr": ExtraCurrs,
+        "positions": positions,
         "n_laps": n_laps
     }
 

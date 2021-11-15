@@ -65,38 +65,38 @@ def current_conversion_exp():
     return [
         {
             "ExtraCurr_0": 0.0,
-            "abruptness": 5.0,
-            "hard_thresh": False
+            "abruptness": 2.0,
+            "hard_thresh": True
         }, 
         {
             "ExtraCurr_0": 0.25,
-            "abruptness": 5.0,
-            "hard_thresh": False
+            "abruptness": 2.0,
+            "hard_thresh": True
         }, 
         {
             "ExtraCurr_0": 0.5,
-            "abruptness": 5.0,
-            "hard_thresh": False
+            "abruptness": 2.0,
+            "hard_thresh": True
         }, 
         {
             "ExtraCurr_0": 0.75,
-            "abruptness": 5.0,
-            "hard_thresh": False
+            "abruptness": 2.0,
+            "hard_thresh": True
         }, 
         {
             "ExtraCurr_0": 0.90,
-            "abruptness": 5.0,
-            "hard_thresh": False
+            "abruptness": 2.0,
+            "hard_thresh": True
         }, 
         {
             "ExtraCurr_0": 1.0,
-            "abruptness": 5.0,
-            "hard_thresh": False
+            "abruptness": 2.0,
+            "hard_thresh": True
         }, 
         {
             "ExtraCurr_0": 1.5,
-            "abruptness": 5.0,
-            "hard_thresh": False
+            "abruptness": 2.0,
+            "hard_thresh": True
         }, 
     ]
 
@@ -115,4 +115,17 @@ if __name__ == "__main__":
 
         sim_main(sim_params, run_id=run_id)
         plot_run(sim_params, run_id=run_id)
-    plot_compilation(sim_params, run_ids=run_ids)
+    
+    compiled_name = "hthresh={}_abruptness={}_mean".format(sim_params["hard_thresh"], sim_params["abruptness"])
+    plot_compilation(sim_params, run_ids=run_ids, compile_name=compiled_name)
+
+    current = 0.75
+    included_trials = [
+        "hthresh=True_abruptness=0.5",
+        "hthresh=False_abruptness=0.5",
+        "hthresh=False_abruptness=2.0",
+        "hthresh=False_abruptness=5.0",
+    ]
+    included_trials = [f"current={current}_" + included_trial for included_trial in included_trials]
+    plot_compilation(sim_params, run_ids=included_trials, compile_name=f"current={current}_final",
+        labels=["hard threshold", "abruptness=0.5", "abruptness=2.0", "abruptness=5.0"])
