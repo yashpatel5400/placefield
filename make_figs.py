@@ -77,8 +77,8 @@ def plot_run(sim_pars, run_id):
     # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
     plot_FR(pos, RF_develop[n_laps-1], "#FF9900", ylabel="")
-    plt.show()
     plt.savefig(fig_dir + "Run_{0:03d}-final_activity.png".format(int(run_id)), dpi=300, transparent=True)
+    plt.show()
     plt.cla()
 
     # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -97,5 +97,6 @@ def plot_run(sim_pars, run_id):
     plt.plot(soma_mean, "k-", lw=2, label="Soma")
     plt.legend()
 
-    plt.show()
     plt.savefig(fig_dir + "Run_{0:03d}-learning.png".format(int(run_id)), dpi=300, transparent=True)
+    plt.show()
+    

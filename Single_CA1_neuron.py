@@ -119,6 +119,11 @@ def construct_net(sim_pars):
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # Calculations to be performed at every integration step -----------------------------------------------------
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+def gate_soma(hard_thresh, Vsoma, theta_prop):
+    if hard_thresh:
+        return int(Vsoma > theta_prop)
+    return 1 / (1 + np.exp(-(3 * Vsoma - theta_prop)))
+
 def sim_step(net, Pre_input, sim_pars):
     # Simulation parameters ------------------------------------------------------------------------------
     eta_FR = sim_pars["eta_FR"]
@@ -132,6 +137,7 @@ def sim_step(net, Pre_input, sim_pars):
     eta_homeo = sim_pars["eta_homeo"]
     noise_input = sim_pars["noise_input"]
     theta_prop = sim_pars["theta_prop"]
+    hard_thresh = sim_pars["hard_thresh"]
 
     # Get the values from the network --------------------------------------------------------------------
     Wpre_d = net.Wpre_d
@@ -148,8 +154,7 @@ def sim_step(net, Pre_input, sim_pars):
 
     # Calculate the firing rate for the postsynaptic neuron (and rectify it when negative)----------------
     Vsoma = ExtraCurr - I_soma
-    RtES = RESin + eta_FR * dt * (-RESin + _rect(int(Vsoma > theta_prop) * np.sum(REDin) + Vsoma - Nth))
-    # RtES = RESin + eta_FR * dt * (-RESin + _rect(1 * np.sum(REDin) + ExtraCurr - Nth - I_soma))
+    RtES = RESin + eta_FR * dt * (-RESin + _rect(gate_soma(hard_thresh, Vsoma, theta_prop) * np.sum(REDin) + Vsoma - Nth))
     RtED = REDin + eta_FR * dt * (-REDin + g_dend(np.dot(Wpre_d, Pre_input) - I_dend))
 
     RtES = RtES * (RtES > 0.)

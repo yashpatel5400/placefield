@@ -52,6 +52,7 @@ def config():
 
         # Number of trials for multi-trial experiment ----------------------------------------
         "theta_prop": 0.2,
+        "hard_thresh": True,
 
         "message": ""
     }
@@ -59,7 +60,7 @@ def config():
 def current_conversion_exp():
     return {
         "0": {
-            "ExtraCurr_0": 0.0,
+            "ExtraCurr_0": 1.0,
         }, 
         "1": {
             "ExtraCurr_0": 1.0,
@@ -77,5 +78,5 @@ if __name__ == "__main__":
         for change in run_id_to_config[run_id]:
             sim_params[change] = run_id_to_config[run_id][change]
 
-        sim_main(sim_params, run_id=run_id)
+        # sim_main(sim_params, run_id=run_id)
         plot_run(sim_params, run_id=run_id)
