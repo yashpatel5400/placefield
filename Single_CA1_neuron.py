@@ -119,10 +119,10 @@ def construct_net(sim_pars):
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # Calculations to be performed at every integration step -----------------------------------------------------
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-def gate_soma(hard_thresh, Vsoma, theta_prop):
+def gate_soma(hard_thresh, Vsoma, theta_prop, abruptness):
     if hard_thresh:
         return int(Vsoma > theta_prop)
-    return 1 / (1 + np.exp(-(3 * Vsoma - theta_prop)))
+    return 1 / (1 + np.exp(-abruptness * (Vsoma + theta_prop)))
 
 def sim_step(net, Pre_input, sim_pars):
     # Simulation parameters ------------------------------------------------------------------------------
@@ -138,6 +138,7 @@ def sim_step(net, Pre_input, sim_pars):
     noise_input = sim_pars["noise_input"]
     theta_prop = sim_pars["theta_prop"]
     hard_thresh = sim_pars["hard_thresh"]
+    abruptness = sim_pars["abruptness"]
 
     # Get the values from the network --------------------------------------------------------------------
     Wpre_d = net.Wpre_d
@@ -154,7 +155,7 @@ def sim_step(net, Pre_input, sim_pars):
 
     # Calculate the firing rate for the postsynaptic neuron (and rectify it when negative)----------------
     Vsoma = ExtraCurr - I_soma
-    RtES = RESin + eta_FR * dt * (-RESin + _rect(gate_soma(hard_thresh, Vsoma, theta_prop) * np.sum(REDin) + Vsoma - Nth))
+    RtES = RESin + eta_FR * dt * (-RESin + _rect(gate_soma(hard_thresh, Vsoma, theta_prop, abruptness) * np.sum(REDin) + Vsoma - Nth))
     RtED = REDin + eta_FR * dt * (-REDin + g_dend(np.dot(Wpre_d, Pre_input) - I_dend))
 
     RtES = RtES * (RtES > 0.)
@@ -200,6 +201,7 @@ def plasticity_trial(sim_pars):  # place map plasticity
     Isoma_0 = sim_pars["Isoma_0"]
     v_run = sim_pars["v_run"]
     PF_amp = sim_pars["PF_amp"]
+    movement_type = sim_pars["movement_type"]
 
     # Create the network ---------------------------------------------------------------------------------
     net = construct_net(sim_pars)
@@ -219,7 +221,22 @@ def plasticity_trial(sim_pars):  # place map plasticity
     Wpre_ds = np.zeros((explore_steps, N_dend, N_pre))
     ExtraCurrs = np.zeros((explore_steps))
 
-    def pos_exp(t): return v * t
+    def pos_exp_back_forth(t): 
+        if t > t_explore / 2:
+            return v * (t_explore / 2 - t)
+        return v * t
+
+    def pos_exp_linear(t): 
+        if t > t_explore / 2:
+            return v * (t_explore / 2 - t)
+        return v * t
+
+    def pos_exp(t):
+        if movement_type == "linear":
+            return pos_exp_linear(t)
+        elif movement_type == "back_forth":
+            return pos_exp_back_forth(t)
+        return -1
 
     # Initialize inhibition for novel environments (low dend inhibition + high somatic inhibition)
     net.I_dend = 0 * net.I_dend + Idend_0

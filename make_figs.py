@@ -76,9 +76,8 @@ def plot_run(sim_pars, run_id):
     # Plot final activation curve
     # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    plot_FR(pos, RF_develop[n_laps-1], ylabel="")
-    plt.savefig(fig_dir + "current={}_hthresh={}-final_activity.png".format(
-        sim_pars["ExtraCurr_0"], sim_pars["hard_thresh"]), dpi=300, transparent=True)
+    plot_FR(pos, RF_develop[n_laps-1], xlim=(15,30), ylim=(0,1), xlabel="Position (a.u.)", ylabel="Mean activity")
+    plt.savefig(fig_dir + f"{run_id}-final_activity.png", dpi=300, transparent=True)
     # plt.show()
     plt.clf()
 
@@ -98,8 +97,7 @@ def plot_run(sim_pars, run_id):
     plt.plot(soma_mean, "k-", lw=2, label="Soma")
     plt.legend()
 
-    plt.savefig(fig_dir + "current={}_hthresh={}-final_activity.png".format(
-        sim_pars["ExtraCurr_0"], sim_pars["hard_thresh"]), dpi=300, transparent=True)
+    plt.savefig(fig_dir + f"{run_id}-mean_activity.png", dpi=300, transparent=True)
     # plt.show()
     plt.clf()
     
@@ -115,7 +113,7 @@ def plot_compilation(sim_pars, run_ids):
         Dend_RF = Dends_FRs_ave[:, 0].reshape((-1, points_lap))
         pos = np.linspace(0, 50, points_lap)
 
-        plot_FR(pos, RF_develop[n_laps-1], xlim=(15,30), ylim=(0,1), ylabel="")
+        plot_FR(pos, RF_develop[n_laps-1], xlim=(15,30), ylim=(0,1), ylabel="", label=run_id.split("_")[0])
     plt.savefig(fig_dir + "hthresh={}-compiled_activity.png".format(
         sim_pars["hard_thresh"]), dpi=300, transparent=True)
     

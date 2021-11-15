@@ -53,6 +53,10 @@ def config():
         # Number of trials for multi-trial experiment ----------------------------------------
         "theta_prop": 0.2,
         "hard_thresh": True,
+        "abruptness": 2.0,
+
+        # Type of movement of rat around track ----------------------------------------
+        "movement_type": "linear",
 
         "message": ""
     }
@@ -61,26 +65,37 @@ def current_conversion_exp():
     return [
         {
             "ExtraCurr_0": 0.0,
+            "abruptness": 5.0,
             "hard_thresh": False
         }, 
         {
             "ExtraCurr_0": 0.25,
+            "abruptness": 5.0,
             "hard_thresh": False
         }, 
         {
             "ExtraCurr_0": 0.5,
+            "abruptness": 5.0,
             "hard_thresh": False
         }, 
         {
             "ExtraCurr_0": 0.75,
+            "abruptness": 5.0,
+            "hard_thresh": False
+        }, 
+        {
+            "ExtraCurr_0": 0.90,
+            "abruptness": 5.0,
             "hard_thresh": False
         }, 
         {
             "ExtraCurr_0": 1.0,
+            "abruptness": 5.0,
             "hard_thresh": False
         }, 
         {
             "ExtraCurr_0": 1.5,
+            "abruptness": 5.0,
             "hard_thresh": False
         }, 
     ]
@@ -94,7 +109,8 @@ if __name__ == "__main__":
         for change in exp:
             sim_params[change] = exp[change]
 
-        run_id = "current={}_hthresh={}".format(sim_params["ExtraCurr_0"], sim_params["hard_thresh"])
+        run_id = "current={}_hthresh={}_abruptness={}".format(
+            sim_params["ExtraCurr_0"], sim_params["hard_thresh"], sim_params["abruptness"])
         run_ids.append(run_id)
 
         sim_main(sim_params, run_id=run_id)
