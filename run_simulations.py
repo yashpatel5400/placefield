@@ -60,5 +60,5 @@ if __name__ == "__main__":
     run_id = "0"
     sim_params = config()
 
-    # sim_main(sim_params, run_id=run_id)
+    sim_main(sim_params, run_id=run_id)
     plot_run(sim_params, run_id=run_id)

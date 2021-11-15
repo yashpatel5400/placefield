@@ -15,6 +15,9 @@
 #
 # Author: Victor Pedrosa
 # Imperial College London, London, UK - Jan 2020
+#
+# Modified by: Yash Patel
+# University of Michigan
 
 import numpy as np
 import os
@@ -35,7 +38,7 @@ def _upper(x, max): return x - (x - max) * (x > max)  # apply an upper bound
 def _lower(x, min): return x - (x - min) * (x < min)  # apply a lower bound
 
 
-def Pre_layer_input(pos, N_pre, T_length, PF_amp):
+def pre_layer_input(pos, N_pre, T_length, PF_amp):
     '''
     This function returns the firing rate of each neuron in the presynaptic layer as a function of
     the animal's position
@@ -109,14 +112,14 @@ class Network(object):
         self.I_soma = 0.
 
 
-def my_vars(sim_pars):
+def construct_net(sim_pars):
     np.random.seed()
     return Network(sim_pars)
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # Calculations to be performed at every integration step -----------------------------------------------------
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-def SimStep(net, Pre_input, sim_pars):
+def sim_step(net, Pre_input, sim_pars):
     # Simulation parameters ------------------------------------------------------------------------------
     eta_FR = sim_pars['eta_FR']
     Nth = sim_pars['Nth']
@@ -179,7 +182,7 @@ def SimStep(net, Pre_input, sim_pars):
 # Define the steps to be done during the experiment ----------------------------------------------------------
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-def PM_plast_one_trial(sim_pars):  # place map plasticity
+def plasticity_trial(sim_pars):  # place map plasticity
     """
     """
 
@@ -194,7 +197,7 @@ def PM_plast_one_trial(sim_pars):  # place map plasticity
     PF_amp = sim_pars['PF_amp']
 
     # Create the network ---------------------------------------------------------------------------------
-    net = my_vars(sim_pars)
+    net = construct_net(sim_pars)
 
     # -------------------------------------------------------------------------------------------------
     # Start actual experiment and let the animal explore the environment ------------------------------
@@ -219,10 +222,10 @@ def PM_plast_one_trial(sim_pars):  # place map plasticity
 
     for step in range(explore_steps):
         t_bin = step * dt
-        Pre_input = Pre_layer_input(pos_exp(t_bin), N_pre, T_length, PF_amp)
+        Pre_input = pre_layer_input(pos_exp(t_bin), N_pre, T_length, PF_amp)
 
         # Call the simulation step to calculate all the values for next time step
-        net = SimStep(net, Pre_input, sim_pars)
+        net = sim_step(net, Pre_input, sim_pars)
 
         # Save the results
         RESs[step] = net.RtES
@@ -237,7 +240,7 @@ def PM_plast_one_trial(sim_pars):  # place map plasticity
 # Call the function with the experiment and save the results (define one trial)
 
 def run_trial(sim_pars, fname):  # place map plasticity
-    RESs, REDs, Wpre_ds, ExtraCurrs, t_explore, n_laps = PM_plast_one_trial(sim_pars)
+    RESs, REDs, Wpre_ds, ExtraCurrs, t_explore, n_laps = plasticity_trial(sim_pars)
     return {
         "t_explore": t_explore,
         "soma": RESs,
