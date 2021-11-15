@@ -1,38 +1,64 @@
-# %% Import modules -------------------------------------------------------------------------------------
-import subprocess
-import os
-import json
-import sys
-import numpy as np
-import multiprocessing as mp
+##################################################################################
+# run_simulations.py - Revamped version of main simulation code
+#
+# Author: Yash Patel
+# University of Michigan
+##################################################################################
 
+from Single_CA1_neuron import sim_main
+from make_figs import plot_run
 
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# Parameters to be saved for each the experiment -------------------------------------------------------------
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-# %% Run the main code with sacred to track every experiment -------------------------------------------
+def config():
+    return {
+        # Parameters ---------------------------------------------------------------------------------
+        'T_length': 50.,     # Length of the track
+        'N_pre': 10,         # Number of neurons in the presynaptic layer
+        'Nth': 1.0,          # "Spiking threshold" (there is actually no threshold - rate-based neurons)
+        'N_dend': 2,         # Number of dendritic compartments
+        'ExtraCurr_0': 1.5,   # Extra current injected at the soma
 
-# from Single_CA1_neuron import ex
-# ex.run_command('my_main')
+        # Simulation parameters --------------------------------------------------------------
+        'dt': 1.,            # [ms] Simulation time step
 
+        # Excitatory synaptic plasticity -----------------------------------------------------
+        'eta_Extra': 0.e-4,  # [ms^-1] Learning rate for the extra currents onto pyramidal neurons
+        'eta_input': 2e-4,   # [ms^-1] Learning rate for the input weights from prelayer neurons
+        'eta_homeo': 2e-4,   # [ms^-1] Learning rate for homeostatic plasticity
 
-# %% Run the main code to create the figures -----------------------------------------------------------
+        # Novelty signal ---------------------------------------------------------------------
+        'Idend_target': 8.5, # Dendritic inhibition in familiar environments
+        'Isoma_target': 0.,  # Somatic inhibition in familiar environments
+        'Idend_0': 0.8,      # Initial dendritic inhibition
+        'Isoma_0': 1.2,      # Initial somatic inhibition
+        'tau_nov': 100e3,    # [ms] Novelty signal time constant
 
-n_sims = 1
+        # Presynaptic place field ------------------------------------------------------------
+        'PF_amp': 2.2,       # Amplitude of presynaptic place fields
 
+        # Experiment parameters --------------------------------------------------------------
+        'n_laps': 100,       # Number of laps the subjets runs for each trial
+        'v_run': 1e-2,       # Running speed
+        'noise_input': 0.05, # amplitude of noise for input neurons
 
-for i in range(n_sims):
-    f_names = os.listdir('my_runs/')
-    f_names.sort()
+        # Firing rate parameters -------------------------------------------------------------
+        'eta_FR': 2.e-1,     # [ms^-1] Learning rate for the firing rates
 
-    f_names = [int(fname) for fname in f_names[1:-1]]
-    f_names.sort()
+        # Number of trials for multi-trial experiment ----------------------------------------
+        'NTrials': 1,
 
-    if len(f_names) == 0:
-        f_names = [1]
+        # Number of trials for multi-trial experiment ----------------------------------------
+        'theta_prop': 0.2,
 
-    sys.argv = ['0', '{0:d}'.format(f_names[-1-i])]
-    # exec(open("./Make_figs0.py").read())
-    # exec(open("./Make_figs1.py").read())
-    exec(open("./make_figs.py").read())
+        'message': ''
+    }
 
-    plt.show()
+if __name__ == "__main__":
+    run_id = "0"
+    sim_params = config()
 
+    # sim_main(sim_params, run_id=run_id)
+    plot_run(sim_params, run_id=run_id)

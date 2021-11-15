@@ -16,86 +16,10 @@
 # Author: Victor Pedrosa
 # Imperial College London, London, UK - Jan 2020
 
-
-# Clear everything!
-def clearall():
-    all = [var for var in globals() if var[0] != "_"]
-    for var in all:
-        del globals()[var]
-
-
-clearall()
-
-# ------------------------------------- Import libraries ----------------------------------------------------
-
 import numpy as np
 import os
 import sys
 import pickle
-import scipy.io as sio
-import multiprocessing as mp
-from time import time as time_now
-from scipy.optimize import curve_fit
-
-from sacred import Experiment
-import shutil
-import tempfile
-
-
-
-ex = Experiment("Exploring_three_levels_of_plasticity")
-
-
-
-# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-# Parameters to be saved for each the experiment -------------------------------------------------------------
-# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-@ex.config
-def config():
-    sim_pars = {
-        # Parameters ---------------------------------------------------------------------------------
-        'T_length': 50.,     # Length of the track
-        'N_pre': 10,         # Number of neurons in the presynaptic layer
-        'Nth': 1.0,          # "Spiking threshold" (there is actually no threshold - rate-based neurons)
-        'N_dend': 2,         # Number of dendritic compartments
-        'ExtraCurr_0': 1.5,   # Extra current injected at the soma
-
-        # Simulation parameters --------------------------------------------------------------
-        'dt': 1.,            # [ms] Simulation time step
-
-        # Excitatory synaptic plasticity -----------------------------------------------------
-        'eta_Extra': 0.e-4,  # [ms^-1] Learning rate for the extra currents onto pyramidal neurons
-        'eta_input': 2e-4,   # [ms^-1] Learning rate for the input weights from prelayer neurons
-        'eta_homeo': 2e-4,   # [ms^-1] Learning rate for homeostatic plasticity
-
-        # Novelty signal ---------------------------------------------------------------------
-        'Idend_target': 8.5, # Dendritic inhibition in familiar environments
-        'Isoma_target': 0.,  # Somatic inhibition in familiar environments
-        'Idend_0': 0.8,      # Initial dendritic inhibition
-        'Isoma_0': 1.2,      # Initial somatic inhibition
-        'tau_nov': 100e3,    # [ms] Novelty signal time constant
-
-        # Presynaptic place field ------------------------------------------------------------
-        'PF_amp': 2.2,       # Amplitude of presynaptic place fields
-
-        # Experiment parameters --------------------------------------------------------------
-        'n_laps': 100,       # Number of laps the subjets runs for each trial
-        'v_run': 1e-2,       # Running speed
-        'noise_input': 0.05, # amplitude of noise for input neurons
-
-        # Firing rate parameters -------------------------------------------------------------
-        'eta_FR': 2.e-1,     # [ms^-1] Learning rate for the firing rates
-
-        # Number of trials for multi-trial experiment ----------------------------------------
-        'NTrials': 1,
-
-        # Number of trials for multi-trial experiment ----------------------------------------
-        'theta_prop': 0.2,
-
-        'message': ''
-    }
-
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # Some functions to be used throughout the code --------------------------------------------------------------
@@ -111,7 +35,6 @@ def _upper(x, max): return x - (x - max) * (x > max)  # apply an upper bound
 def _lower(x, min): return x - (x - min) * (x < min)  # apply a lower bound
 
 
-@ex.capture(prefix="sim_pars")
 def Pre_layer_input(pos, N_pre, T_length, PF_amp):
     '''
     This function returns the firing rate of each neuron in the presynaptic layer as a function of
@@ -128,7 +51,6 @@ def Pre_layer_input(pos, N_pre, T_length, PF_amp):
         place_input[(n - 1):n] = amp * np.exp(-(dist) ** 2 / (2. * sigma ** 2))
 
     return place_input
-
 
 def g_dend(x):
     '''
@@ -147,7 +69,6 @@ def g_dend(x):
     g_dend = 2 * (2 * g1 + 1 * g2) / 3.
 
     return g_dend
-
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # Initialization of variables --------------------------------------------------------------------------------
@@ -188,20 +109,13 @@ class Network(object):
         self.I_soma = 0.
 
 
-@ex.command
 def my_vars(sim_pars):
     np.random.seed()
-
-    # Variables that will change with time ---------------------------------------------------------------
-    net = Network(sim_pars)
-
-    return net
-
+    return Network(sim_pars)
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # Calculations to be performed at every integration step -----------------------------------------------------
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-@ex.command
 def SimStep(net, Pre_input, sim_pars):
     # Simulation parameters ------------------------------------------------------------------------------
     eta_FR = sim_pars['eta_FR']
@@ -261,13 +175,10 @@ def SimStep(net, Pre_input, sim_pars):
 
     return net
 
-
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # Define the steps to be done during the experiment ----------------------------------------------------------
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-
-@ex.capture
 def PM_plast_one_trial(sim_pars):  # place map plasticity
     """
     """
@@ -280,9 +191,10 @@ def PM_plast_one_trial(sim_pars):  # place map plasticity
     Idend_0 = sim_pars['Idend_0']
     Isoma_0 = sim_pars['Isoma_0']
     v_run = sim_pars['v_run']
+    PF_amp = sim_pars['PF_amp']
 
     # Create the network ---------------------------------------------------------------------------------
-    net = my_vars()
+    net = my_vars(sim_pars)
 
     # -------------------------------------------------------------------------------------------------
     # Start actual experiment and let the animal explore the environment ------------------------------
@@ -307,10 +219,10 @@ def PM_plast_one_trial(sim_pars):  # place map plasticity
 
     for step in range(explore_steps):
         t_bin = step * dt
-        Pre_input = Pre_layer_input(pos_exp(t_bin))
+        Pre_input = Pre_layer_input(pos_exp(t_bin), N_pre, T_length, PF_amp)
 
         # Call the simulation step to calculate all the values for next time step
-        net = SimStep(net, Pre_input)
+        net = SimStep(net, Pre_input, sim_pars)
 
         # Save the results
         RESs[step] = net.RtES
@@ -324,85 +236,34 @@ def PM_plast_one_trial(sim_pars):  # place map plasticity
 # -----------------------------------------------------------------------------------------------------
 # Call the function with the experiment and save the results (define one trial)
 
-def One_trial(ids):  # place map plasticity
-    '''
-    ids should be a tuple containing:
-    (1) The trial id, which will be specific for each core running the simulation
-    (2) The run id, which will be defined by sacred and depends on the id of the experiment being run
-    '''
-
-    trial_id, run_id, tempdir = ids
-
-    time_in = time_now()
-
-    # Call the function with the experiment:
-    RESs, REDs, Wpre_ds, ExtraCurrs, t_explore, n_laps = PM_plast_one_trial()
-
-    time_final = time_now()
-    total_time = time_final - time_in
-
-    # Same the result for this trial in a temporary file:
-    fname = '/Firing_rates_Place_cell_soma_and_dends_trial_{0:03d}.pickle'.format(int(trial_id))
-    fpath = tempdir.name + fname
-
-    print(' >> ' + fname + ' time = ' + '{0:4.1f}'.format(total_time))
-
-    with open(fpath, 'wb') as pickle_out:
-        data = {"t_explore": t_explore,
-                "soma": RESs,
-                "dendrites": REDs,
-                "Wpre_to_dend": Wpre_ds,
-                "ExtraCurr": ExtraCurrs,
-                "n_laps": n_laps}
-        pickle.dump(data, pickle_out)
-        pickle_out.close()
-
-    return fpath
+def run_trial(sim_pars, fname):  # place map plasticity
+    RESs, REDs, Wpre_ds, ExtraCurrs, t_explore, n_laps = PM_plast_one_trial(sim_pars)
+    return {
+        "t_explore": t_explore,
+        "soma": RESs,
+        "dendrites": REDs,
+        "Wpre_to_dend": Wpre_ds,
+        "ExtraCurr": ExtraCurrs,
+        "n_laps": n_laps
+    }
 
 
 # -----------------------------------------------------------------------------------------------------
 # Define the main funtion which will call other functions and run it in parallel
 
-from sacred.observers import FileStorageObserver
-
-ex.observers.append(FileStorageObserver.create('my_runs'))
-
-
-@ex.automain
-def my_main(sim_pars, _run):
-    tempdir = tempfile.TemporaryDirectory()
-
-    _run.info["Description"] = sim_pars['message']  # write message in a file called "info.json"
-
-    print('\n Starting simulations...\n')
-
-    run_id = str(_run._id)  # id of the experiment (sacred)
-
-    NTrials = sim_pars['NTrials']
-    Trials = [(i + 1, run_id, tempdir) for i in range(NTrials)]
-
-    # Run code in parallel...
-    # quant_proc = np.max((mp.cpu_count() - 1, 1))
-    # pool = mp.Pool(processes=quant_proc)
-
-    fnames = map(One_trial, Trials)  # return the names of the output files
-
-    # Export the final file with all the data for all trials
+def sim_main(sim_pars, run_id):
     exp_dir = r'./my_runs/' + run_id + '/Data_trials/'
     if not os.path.exists(exp_dir):
         os.makedirs(exp_dir)
     fname = exp_dir + '/Firing_rates_Place_cell_soma_and_dends_all_trials.pickle'
 
+    print('\n Starting simulations...\n')
     data = {}
-    for i, name in enumerate(fnames):
-        i = i + 1
-        with open(name, 'rb') as pickle_in:
-            datai = pickle.load(pickle_in)
-            data[i] = datai
-            pickle_in.close()
-        #			os.remove(name)
-        with open(fname, 'wb') as pickle_out:
-            pickle.dump(data, pickle_out)
-            pickle_out.close()
 
-    tempdir.cleanup()
+    num_trials = int(sim_pars['NTrials'])
+    for trial in range(num_trials):
+        data[trial] = run_trial(sim_pars, fname)
+
+    with open(fname, 'wb') as pickle_out:
+        pickle.dump(data, pickle_out)
+        pickle_out.close()
