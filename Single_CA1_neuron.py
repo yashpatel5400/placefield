@@ -23,6 +23,7 @@ import numpy as np
 import os
 import sys
 import pickle
+import matplotlib.pyplot as plt
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # Some functions to be used throughout the code --------------------------------------------------------------
@@ -99,8 +100,8 @@ class Network(object):
         Return a Network object
         """
         self.Wpre_d = np.zeros((pars["N_dend"], pars["N_pre"]))
-        self.Wpre_d[0, 4] = 1.
-        self.Wpre_d[0, :] += _rect(np.random.normal(0, 0.01, pars["N_pre"]))
+        # self.Wpre_d[0, 4] = 1.
+        self.Wpre_d[0, :] += np.ones(pars["N_pre"]) # _rect(np.random.normal(0, 1.0, pars["N_pre"]))
         self.ExtraCurr = pars["ExtraCurr_0"]
 
         # time-dependent variables
@@ -222,30 +223,49 @@ def plasticity_trial(sim_pars):  # place map plasticity
     Wpre_ds = np.zeros((explore_steps, N_dend, N_pre))
     ExtraCurrs = np.zeros((explore_steps))
 
-    def pos_exp_back_forth(t): 
-        if t > t_explore / 2:
-            return v * (t_explore / 2 - t)
-        return v * t
-
     def pos_exp_linear(t): 
-        if t > t_explore / 2:
-            return v * (t_explore / 2 - t)
-        return v * t
+        return 10 * v * t
 
-    def pos_exp(t):
+    def pos_exp_constant(t): 
+        return 10
+
+    def pos_exp_back_forth(t): 
+        return 40 + 10 * np.sin(t / 10)
+
+    def pos_exp_random_walk(position, t): 
+        if np.random.random() > 0.5:
+            return position + 1
+        return position - 1
+
+    def pos_exp(position, t):
         if movement_type == "linear":
             return pos_exp_linear(t)
+        elif movement_type == "constant":
+            return pos_exp_constant(t)
         elif movement_type == "back_forth":
             return pos_exp_back_forth(t)
+        elif movement_type == "random_walk":
+            return pos_exp_random_walk(position, t)
         return -1
 
+    pre_input = np.zeros((0, 10))
+    for pos in range(int(T_length)):
+        pre_input = np.vstack((pre_input, pre_layer_input(pos, N_pre, T_length, PF_amp)))
+    trans_pre_input = pre_input.transpose()
+    for presynaptic_neuron in range(10):
+        plt.plot(list(range(int(T_length))), trans_pre_input[presynaptic_neuron, :], label=presynaptic_neuron)
+    plt.legend()
+    plt.savefig("receptive_fields.png")
+    plt.clf()
+    
     # Initialize inhibition for novel environments (low dend inhibition + high somatic inhibition)
     net.I_dend = 0 * net.I_dend + Idend_0
     net.I_soma = 0 * net.I_soma + Isoma_0
 
+    position = 0
     for step in range(explore_steps):
         t_bin = step * dt
-        position = pos_exp(t_bin)
+        position = pos_exp(position, t_bin)
         Pre_input = pre_layer_input(position, N_pre, T_length, PF_amp)
 
         # Call the simulation step to calculate all the values for next time step
@@ -258,6 +278,7 @@ def plasticity_trial(sim_pars):  # place map plasticity
         Wpre_ds[step] = net.Wpre_d
         ExtraCurrs[step] = net.ExtraCurr
 
+    print("Done")
     return positions, RESs, REDs, Wpre_ds, ExtraCurrs, t_explore, n_laps
 
 

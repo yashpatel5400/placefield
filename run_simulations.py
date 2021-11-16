@@ -8,6 +8,8 @@
 from Single_CA1_neuron import sim_main
 from make_figs import plot_run, plot_compilation
 
+from PIL import Image
+
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # Parameters to be saved for each the experiment -------------------------------------------------------------
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -64,44 +66,95 @@ def config():
 def current_conversion_exp():
     return [
         {
-            "ExtraCurr_0": 0.0,
+            "ExtraCurr_0": 1.0,
             "abruptness": 2.0,
-            "hard_thresh": True
+            "hard_thresh": True,
         }, 
         {
             "ExtraCurr_0": 0.25,
             "abruptness": 2.0,
-            "hard_thresh": True
+            "hard_thresh": True,
         }, 
         {
             "ExtraCurr_0": 0.5,
             "abruptness": 2.0,
-            "hard_thresh": True
+            "hard_thresh": True,
         }, 
         {
             "ExtraCurr_0": 0.75,
             "abruptness": 2.0,
-            "hard_thresh": True
+            "hard_thresh": True,
         }, 
         {
             "ExtraCurr_0": 0.90,
             "abruptness": 2.0,
-            "hard_thresh": True
+            "hard_thresh": True,
         }, 
         {
             "ExtraCurr_0": 1.0,
             "abruptness": 2.0,
-            "hard_thresh": True
+            "hard_thresh": True,
         }, 
         {
             "ExtraCurr_0": 1.5,
             "abruptness": 2.0,
-            "hard_thresh": True
+            "hard_thresh": True,
         }, 
     ]
 
+def movement_exp():
+    return [
+        {
+            "movement_type": "linear",
+        },
+        {
+            "movement_type": "constant",
+        },
+        {
+            "movement_type": "back_forth",
+        },
+        {
+            "movement_type": "random_walk",
+        },
+    ]
+
 if __name__ == "__main__":
-    run_id_to_config = current_conversion_exp()
+    merge_pictures = False
+    if merge_pictures:
+        movement_types = [
+            "linear",
+            "constant",
+            "back_forth",
+            "random_walk",
+        ]
+
+        for movement_type in movement_types:
+            fnames = [
+                "./Figures/" + f"movement_type={movement_type}_0-dendritic_weights.png",
+                "./Figures/" + f"movement_type={movement_type}_25-dendritic_weights.png",
+                "./Figures/" + f"movement_type={movement_type}_50-dendritic_weights.png",
+                "./Figures/" + f"movement_type={movement_type}_3000-dendritic_weights.png",
+                "./Figures/" + f"movement_type={movement_type}_6000-dendritic_weights.png",
+                "./Figures/" + f"movement_type={movement_type}_9000-dendritic_weights.png",
+            ]
+
+            images = [Image.open(x) for x in fnames]
+            widths, heights = zip(*(i.size for i in images))
+
+            total_width = widths[0] * 2
+            max_height = heights[0] * 3
+
+            new_im = Image.new('RGB', (total_width, max_height))
+
+            x_offset = 0
+            for col in range(2):
+                for row in range(3):
+                    im = images[col * 3 + row]
+                    new_im.paste(im, (col * widths[0], row * heights[0]))
+                    
+            new_im.save(f"merged_{movement_type}.png")
+
+    run_id_to_config = movement_exp()
     run_ids = []
 
     for exp in run_id_to_config:
@@ -109,8 +162,7 @@ if __name__ == "__main__":
         for change in exp:
             sim_params[change] = exp[change]
 
-        run_id = "current={}_hthresh={}_abruptness={}".format(
-            sim_params["ExtraCurr_0"], sim_params["hard_thresh"], sim_params["abruptness"])
+        run_id = "movement_type={}".format(sim_params["movement_type"])
         run_ids.append(run_id)
 
         sim_main(sim_params, run_id=run_id)
